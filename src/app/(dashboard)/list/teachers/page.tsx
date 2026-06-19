@@ -7,6 +7,7 @@ import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Class, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
+import TableSort from "@/components/TableSort";
 import Link from "next/link";
 
 type TeacherList = Teacher & { subjects: Subject[] } & { classes: Class[] };
@@ -71,8 +72,9 @@ const TeacherListPage = async ({
     </tr>
   );
 
-  const { page, ...queryParams } = await searchParams;
+  const { page, sort, ...queryParams } = await searchParams;
   const p = page ? parseInt(page) : 1;
+  const sortOrder = sort === "desc" ? "desc" : "asc";
   const query: Prisma.TeacherWhereInput = {};
 
   if (queryParams) {
@@ -96,6 +98,7 @@ const TeacherListPage = async ({
     prisma.teacher.findMany({
       where: query,
       include: { subjects: true, classes: true },
+      orderBy: { name: sortOrder as "asc" | "desc" },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
     }),
@@ -112,9 +115,7 @@ const TeacherListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/filter.png" alt="" width={14} height={14} />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
+            <TableSort />
             {role === "admin" && <FormContainer table="teacher" type="create" />}
           </div>
         </div>

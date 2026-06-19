@@ -85,7 +85,7 @@ const SubjectForm = ({
             multiple
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
             {...register("teachers")}
-            defaultValue={data?.teachers}
+            defaultValue={data?.teachers?.map((t: { id: string }) => t.id)}
           >
             {teachers.map(
               (teacher: { id: string; name: string; surname: string }) => (

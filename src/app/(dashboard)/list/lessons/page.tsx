@@ -2,11 +2,11 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
+import TableSort from "@/components/TableSort";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Class, Lesson, Prisma, Subject, Teacher } from "@prisma/client";
-import Image from "next/image";
 
 type LessonList = Lesson & { subject: Subject } & { class: Class } & {
   teacher: Teacher;
@@ -50,8 +50,9 @@ const LessonListPage = async ({
     </tr>
   );
 
-  const { page, ...queryParams } = await searchParams;
+  const { page, sort, ...queryParams } = await searchParams;
   const p = page ? parseInt(page) : 1;
+  const sortOrder = sort === "desc" ? "desc" : "asc";
   const query: Prisma.LessonWhereInput = {};
 
   if (queryParams) {
@@ -85,6 +86,7 @@ const LessonListPage = async ({
         class: { select: { name: true } },
         teacher: { select: { name: true, surname: true } },
       },
+      orderBy: { name: sortOrder as "asc" | "desc" },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
     }),
@@ -98,12 +100,7 @@ const LessonListPage = async ({
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch />
           <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/filter.png" alt="" width={14} height={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
+            <TableSort />
             {role === "admin" && <FormContainer table="lesson" type="create" />}
           </div>
         </div>

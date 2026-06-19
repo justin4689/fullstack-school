@@ -7,6 +7,7 @@ import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Announcement, Class, Prisma } from "@prisma/client";
 import Image from "next/image";
+import TableSort from "@/components/TableSort";
 
 type AnnouncementList = Announcement & { class: Class };
 
@@ -49,8 +50,9 @@ const AnnouncementListPage = async ({
     </tr>
   );
 
-  const { page, ...queryParams } = await searchParams;
+  const { page, sort, ...queryParams } = await searchParams;
   const p = page ? parseInt(page) : 1;
+  const sortOrder = sort === "desc" ? "desc" : "asc";
   const query: Prisma.AnnouncementWhereInput = {};
 
   if (queryParams) {
@@ -84,6 +86,7 @@ const AnnouncementListPage = async ({
     prisma.announcement.findMany({
       where: query,
       include: { class: true },
+      orderBy: { title: sortOrder as "asc" | "desc" },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
     }),
@@ -100,9 +103,7 @@ const AnnouncementListPage = async ({
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/filter.png" alt="" width={14} height={14} />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
+            <TableSort />
             {role === "admin" && <FormContainer table="announcement" type="create" />}
           </div>
         </div>

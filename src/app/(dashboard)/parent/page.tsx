@@ -22,7 +22,11 @@ const ParentPage = async () => {
               <h1 className="text-xl font-semibold">
                 Schedule ({student.name + " " + student.surname})
               </h1>
-              <BigCalendarContainer type="classId" id={student.classId} />
+              {student.classId ? (
+                <BigCalendarContainer type="classId" id={student.classId} />
+              ) : (
+                <p className="text-gray-400 text-sm mt-4">No class assigned.</p>
+              )}
             </div>
           </div>
         ))}
