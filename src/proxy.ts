@@ -1,5 +1,4 @@
 import { jwtVerify } from "jose";
-import { NextRequest, NextResponse } from "next/server";
 import { routeAccessMap } from "./lib/settings";
 
 const secret = new TextEncoder().encode(process.env.AUTH_SECRET!);
@@ -14,20 +13,25 @@ const matchers = Object.entries(routeAccessMap).map(([route, roles]) => ({
   allowedRoles: roles,
 }));
 
-export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+function getCookie(request: Request, name: string): string | undefined {
+  const cookieHeader = request.headers.get("cookie") ?? "";
+  const entry = cookieHeader
+    .split("; ")
+    .find((c) => c.startsWith(`${name}=`));
+  return entry?.split("=").slice(1).join("=");
+}
 
-  if (
-    pathname.startsWith("/sign-in") ||
-    pathname.startsWith("/api/auth")
-  ) {
-    return NextResponse.next();
+export async function proxy(request: Request) {
+  const { pathname } = new URL(request.url);
+
+  if (pathname.startsWith("/sign-in") || pathname.startsWith("/api/auth")) {
+    return;
   }
 
-  const token = req.cookies.get("__session")?.value;
+  const token = getCookie(request, "__session");
 
   if (!token) {
-    return NextResponse.redirect(new URL("/sign-in", req.url));
+    return Response.redirect(new URL("/sign-in", request.url));
   }
 
   let role: string;
@@ -35,18 +39,19 @@ export async function middleware(req: NextRequest) {
     const { payload } = await jwtVerify(token, secret);
     role = payload.role as string;
   } catch {
-    const res = NextResponse.redirect(new URL("/sign-in", req.url));
-    res.cookies.delete("__session");
-    return res;
+    const response = Response.redirect(new URL("/sign-in", request.url));
+    response.headers.set(
+      "Set-Cookie",
+      "__session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax"
+    );
+    return response;
   }
 
   for (const { matcher, allowedRoles } of matchers) {
     if (matcher(pathname) && !allowedRoles.includes(role)) {
-      return NextResponse.redirect(new URL(`/${role}`, req.url));
+      return Response.redirect(new URL(`/${role}`, request.url));
     }
   }
-
-  return NextResponse.next();
 }
 
 export const config = {
