@@ -1,10 +1,9 @@
-import { Pool } from "@neondatabase/serverless";
+import 'dotenv/config'
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { Day, PrismaClient, UserSex } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-const pool = new Pool({ connectionString: process.env.DIRECT_URL });
-const adapter = new PrismaNeon(pool);
+const adapter = new PrismaNeon({ connectionString: process.env.DIRECT_URL! });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
