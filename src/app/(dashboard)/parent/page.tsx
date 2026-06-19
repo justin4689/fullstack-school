@@ -1,16 +1,14 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
+import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
-
 
 const ParentPage = async () => {
-  const { userId } = auth();
-  const currentUserId = userId;
-  
+  const session = await getSession();
+
   const students = await prisma.student.findMany({
     where: {
-      parentId: currentUserId!,
+      parentId: session!.id,
     },
   });
 

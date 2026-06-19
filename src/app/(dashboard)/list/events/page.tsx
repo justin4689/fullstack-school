@@ -2,11 +2,11 @@ import FormContainer from "@/components/FormContainer";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
+import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Class, Event, Prisma } from "@prisma/client";
 import Image from "next/image";
-import { auth } from "@clerk/nextjs/server";
 
 type EventList = Event & { class: Class };
 
@@ -15,43 +15,17 @@ const EventListPage = async ({
 }: {
   searchParams: { [key: string]: string | undefined };
 }) => {
-
-  const { userId, sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
-  const currentUserId = userId;
+  const session = await getSession();
+  const role = session?.role;
+  const currentUserId = session?.id;
 
   const columns = [
-    {
-      header: "Title",
-      accessor: "title",
-    },
-    {
-      header: "Class",
-      accessor: "class",
-    },
-    {
-      header: "Date",
-      accessor: "date",
-      className: "hidden md:table-cell",
-    },
-    {
-      header: "Start Time",
-      accessor: "startTime",
-      className: "hidden md:table-cell",
-    },
-    {
-      header: "End Time",
-      accessor: "endTime",
-      className: "hidden md:table-cell",
-    },
-    ...(role === "admin"
-      ? [
-          {
-            header: "Actions",
-            accessor: "action",
-          },
-        ]
-      : []),
+    { header: "Title", accessor: "title" },
+    { header: "Class", accessor: "class" },
+    { header: "Date", accessor: "date", className: "hidden md:table-cell" },
+    { header: "Start Time", accessor: "startTime", className: "hidden md:table-cell" },
+    { header: "End Time", accessor: "endTime", className: "hidden md:table-cell" },
+    ...(role === "admin" ? [{ header: "Actions", accessor: "action" }] : []),
   ];
 
   const renderRow = (item: EventList) => (
@@ -92,11 +66,7 @@ const EventListPage = async ({
   );
 
   const { page, ...queryParams } = searchParams;
-
   const p = page ? parseInt(page) : 1;
-
-  // URL PARAMS CONDITION
-
   const query: Prisma.EventWhereInput = {};
 
   if (queryParams) {
@@ -113,8 +83,6 @@ const EventListPage = async ({
     }
   }
 
-  // ROLE CONDITIONS
-
   const roleConditions = {
     teacher: { lessons: { some: { teacherId: currentUserId! } } },
     student: { students: { some: { id: currentUserId! } } },
@@ -123,17 +91,13 @@ const EventListPage = async ({
 
   query.OR = [
     { classId: null },
-    {
-      class: roleConditions[role as keyof typeof roleConditions] || {},
-    },
+    { class: roleConditions[role as keyof typeof roleConditions] || {} },
   ];
 
   const [data, count] = await prisma.$transaction([
     prisma.event.findMany({
       where: query,
-      include: {
-        class: true,
-      },
+      include: { class: true },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
     }),
@@ -142,7 +106,6 @@ const EventListPage = async ({
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
       <div className="flex items-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">All Events</h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
@@ -158,9 +121,7 @@ const EventListPage = async ({
           </div>
         </div>
       </div>
-      {/* LIST */}
       <Table columns={columns} renderRow={renderRow} data={data} />
-      {/* PAGINATION */}
       <Pagination page={p} count={count} />
     </div>
   );

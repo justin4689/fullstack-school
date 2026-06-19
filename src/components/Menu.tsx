@@ -1,4 +1,4 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -118,8 +118,9 @@ const menuItems = [
 ];
 
 const Menu = async () => {
-  const user = await currentUser();
-  const role = user?.publicMetadata.role as string;
+  const session = await getSession();
+  const role = session?.role;
+
   return (
     <div className="mt-4 text-sm">
       {menuItems.map((i) => (
@@ -128,7 +129,7 @@ const Menu = async () => {
             {i.title}
           </span>
           {i.items.map((item) => {
-            if (item.visible.includes(role)) {
+            if (item.visible.includes(role!)) {
               return (
                 <Link
                   href={item.href}

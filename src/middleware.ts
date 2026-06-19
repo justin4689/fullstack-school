@@ -1,33 +1,57 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { jwtVerify } from "jose";
+import { NextRequest, NextResponse } from "next/server";
 import { routeAccessMap } from "./lib/settings";
-import { NextResponse } from "next/server";
 
-const matchers = Object.keys(routeAccessMap).map((route) => ({
-  matcher: createRouteMatcher([route]),
-  allowedRoles: routeAccessMap[route],
+const secret = new TextEncoder().encode(process.env.AUTH_SECRET!);
+
+function createMatcher(pattern: string) {
+  const regex = new RegExp(`^${pattern}$`);
+  return (pathname: string) => regex.test(pathname);
+}
+
+const matchers = Object.entries(routeAccessMap).map(([route, roles]) => ({
+  matcher: createMatcher(route),
+  allowedRoles: roles,
 }));
 
-console.log(matchers);
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-export default clerkMiddleware((auth, req) => {
-  // if (isProtectedRoute(req)) auth().protect()
+  if (
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/api/auth")
+  ) {
+    return NextResponse.next();
+  }
 
-  const { sessionClaims } = auth();
+  const token = req.cookies.get("__session")?.value;
 
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  if (!token) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
+
+  let role: string;
+  try {
+    const { payload } = await jwtVerify(token, secret);
+    role = payload.role as string;
+  } catch {
+    const res = NextResponse.redirect(new URL("/sign-in", req.url));
+    res.cookies.delete("__session");
+    return res;
+  }
 
   for (const { matcher, allowedRoles } of matchers) {
-    if (matcher(req) && !allowedRoles.includes(role!)) {
+    if (matcher(pathname) && !allowedRoles.includes(role)) {
       return NextResponse.redirect(new URL(`/${role}`, req.url));
     }
   }
-});
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
     "/(api|trpc)(.*)",
   ],
 };

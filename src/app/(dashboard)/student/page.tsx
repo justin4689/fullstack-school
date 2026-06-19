@@ -1,20 +1,18 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
-import BigCalendar from "@/components/BigCalender";
 import EventCalendar from "@/components/EventCalendar";
+import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
 
 const StudentPage = async () => {
-  const { userId } = auth();
+  const session = await getSession();
 
   const classItem = await prisma.class.findMany({
     where: {
-      students: { some: { id: userId! } },
+      students: { some: { id: session!.id } },
     },
   });
 
-  console.log(classItem);
   return (
     <div className="p-4 flex gap-4 flex-col xl:flex-row">
       {/* LEFT */}
