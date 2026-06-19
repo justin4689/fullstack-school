@@ -1,5 +1,5 @@
 {
-  "name": "lama-dev-next-dashboard",
+  "name": "justin-dev-next-dashboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,13 +10,15 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
-    "@prisma/client": "^5.19.1",
+    "@neondatabase/serverless": "latest",
+    "@prisma/adapter-neon": "latest",
+    "@prisma/client": "^7",
     "bcryptjs": "^2.4.3",
     "jose": "^5.9.6",
     "moment": "^2.30.1",
     "next": "latest",
     "next-cloudinary": "^6.13.0",
-    "prisma": "^5.19.1",
+    "prisma": "^7",
     "react": "^19",
     "react-big-calendar": "^1.13.2",
     "react-calendar": "^5.0.0",
