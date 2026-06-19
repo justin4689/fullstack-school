@@ -15,7 +15,7 @@ type ExamList = Exam & {
 const ExamListPage = async ({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | undefined };
+  searchParams: Promise<{ [key: string]: string | undefined }>;
 }) => {
   const session = await getSession();
   const role = session?.role;
@@ -57,7 +57,7 @@ const ExamListPage = async ({
     </tr>
   );
 
-  const { page, ...queryParams } = searchParams;
+  const { page, ...queryParams } = await searchParams;
   const p = page ? parseInt(page) : 1;
   const query: Prisma.ExamWhereInput = {};
   query.lesson = {};

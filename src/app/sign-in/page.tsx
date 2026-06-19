@@ -2,7 +2,8 @@
 
 import { loginAction } from "@/lib/authActions";
 import Image from "next/image";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -18,7 +19,7 @@ function SubmitButton() {
 }
 
 const LoginPage = () => {
-  const [state, formAction] = useFormState(loginAction, { error: null });
+  const [state, formAction] = useActionState(loginAction, { error: null });
 
   return (
     <div className="h-screen flex items-center justify-center bg-lamaSkyLight">

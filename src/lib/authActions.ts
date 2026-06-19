@@ -68,7 +68,7 @@ export async function loginAction(
 
   const token = await signSession({ id: userId, role: role! });
 
-  cookies().set("__session", token, {
+  (await cookies()).set("__session", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -80,6 +80,6 @@ export async function loginAction(
 }
 
 export async function logoutAction() {
-  cookies().delete("__session");
+  (await cookies()).delete("__session");
   redirect("/sign-in");
 }

@@ -9,10 +9,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 const SingleTeacherPage = async ({
-  params: { id },
+  params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) => {
+  const { id } = await params;
   const session = await getSession();
   const role = session?.role;
 
